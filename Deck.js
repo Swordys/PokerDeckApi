@@ -121,7 +121,6 @@ module.exports = (app) => {
       res.send(getRandomCard(count));
     } else if (/^(name)({\D\w{1,3}\D})/.test(reqSt)) {
       const word = reqSt.match(/[a-z]+/g)[1].toString();
-      console.log(word);
       res.send(getNameValue(word));
     }
 
@@ -190,6 +189,18 @@ module.exports = (app) => {
     }
   }
 
+  // Get card by name
+  function getNameValue(cardName) {
+    const array = constructor();
+    let resArr = [];
+    array.forEach(card => {
+      if (card.name.toLowerCase() === cardName.toLowerCase()) {
+        resArr.push(card);
+      }
+    }, this);
+    return resArr;
+  }
+
 
   function getFilterSuiteCards(inputSuite, inputSuite2, inputSuite3) {
     const array = this.deck;
@@ -239,17 +250,6 @@ module.exports = (app) => {
     this.getDeck(array);
   }
 
-  function getNameValue(cardName) {
-    const array = constructor();
-    let resArr = [];
-    array.forEach(card => {
-      if (card.name.toLowerCase() === cardName.toLowerCase()) {
-        resArr.push(card);
-      }
-    }, this);
-    return resArr;
-  }
-
   function getFaceCards() {
     const array = this.deck;
     array.forEach(card => {
@@ -271,23 +271,3 @@ module.exports = (app) => {
     }, this);
   }
 }
-
-
-
-// Uncomment methods for results
-
-// newCard.getDeck();
-// newCard.shuffleCards();
-// newCard.getRandomCard();
-// newCard.getRandomCard(10);
-// newCard.getFilterColorCards('black');
-// newCard.getFilterSuiteCards('Diamond');
-// newCard.getFilterSuiteCards('Diamond', 'Club', 'Heart');
-// newCard.sortCards();
-// newCard.sortCards('descending');
-// newCard.getNameValue('Ten');
-// newCard.getNameValue('Ace');
-// newCard.getFaceCards();
-// newCard.getSuites();
-
-// Lots of possabilities
