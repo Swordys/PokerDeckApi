@@ -28,6 +28,7 @@ module.exports = (app) => {
           const unicodeNumber = card === 10 ? 'A' : card;
           const cardUnicode = `1F0${unicodeLetter}${unicodeNumber}`;
           const cardSvg = `https://raw.githubusercontent.com/Swordys/pokerApi/master/cardFold/${cardUnicode}.svg`;
+
           const cardOjb = {
             rank: rankCount,
             faceCard: false,
@@ -123,7 +124,8 @@ module.exports = (app) => {
 
     if (/^(random)\{\d+\}$/.test(reqSt)) {
       const count = parseInt(reqSt.match(/(\d+)/));
-      res.send(getRandomCard(count));
+      const retCards = getRandomCard(count);
+      res.send(retCards);
     } else if (/^(name)({\D\w{1,3}\D})/.test(reqSt)) {
       const word = reqSt.match(/[a-z]+/g)[1].toString();
       res.send(getNameValue(word));
@@ -171,8 +173,13 @@ module.exports = (app) => {
     } else {
       while (numberOf) {
         const randomCard = array[Math.floor(Math.random() * count)];
-        numberArr.push(randomCard);
-        numberOf--;
+        if (!numberArr.includes(randomCard)) {
+          numberArr.push(randomCard);
+          numberOf--;
+        }
+      }
+      if (numberArr.length === 2) {
+        calcPair(numberArr);
       }
       return numberArr;
     }
@@ -205,7 +212,6 @@ module.exports = (app) => {
     }, this);
     return resArr;
   }
-
 
   function getFilterSuiteCards(inputSuite, inputSuite2, inputSuite3) {
     const array = this.deck;
@@ -274,5 +280,61 @@ module.exports = (app) => {
       </div>`;
       root.innerHTML += cardDOM;
     }, this);
+  }
+
+
+  // Clalculations -----
+  const calcPair = (cardPair) => {
+
+    let isPair = false;
+    let isHighRank = false;
+    let isSameSuit = false;
+    let isNextTo = false;
+    let isAce = false;
+    let isHighCard = false;
+
+    let confidenceIndex = 1;
+
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+
+    if (cardOne.rank === cardTwo.rank) {
+      isPair = true;
+      confidenceIndex = cardOne.rank * 2;
+    }
+    if (cardOne.rank + cardTwo.rank > 21) {
+      isHighRank = true;
+      if (isPair) {
+        confidenceIndex *= 1.4;
+      } else {
+        const roundRank = Math.floor((cardOne.rank + cardTwo.rank) / 2);
+        confidenceIndex = roundRank * 1.3;
+      }
+    }
+
+    if (cardOne.rank === 14 || cardTwo.rank === 14) {
+      isAce = true;
+      confidenceIndex *= 1.3;
+    }
+
+    if (cardOne.rank > 11 || cardTwo.rank > 11) {
+      if (!isAce) {
+        confidenceIndex *= 1.2;
+        isHighCard = true;
+      };
+    }
+
+    if (cardOne.cardSuit === cardTwo.cardSuit) {
+      isSameSuit = true;
+      confidenceIndex *= 1.1;
+    }
+
+    if (cardOne.rank - cardTwo.rank === -1 || cardOne.rank - cardTwo.rank === 1) {
+      isNextTo = true;
+      confidenceIndex *= 1.1;
+    }
+
+    console.log(' Pair ' + isPair + '\n', 'Strong Rank ' + isHighRank + '\n', 'Ace ' + isAce + '\n', 'Same Suit ' + isSameSuit + '\n', 'Next To ' + isNextTo + '\n', 'High Card ' + isHighCard + '\n');
+    console.log('Confidence Index - ' + confidenceIndex + '\n\n');
   }
 }
