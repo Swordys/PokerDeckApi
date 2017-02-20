@@ -27,6 +27,7 @@ module.exports = (app) => {
           const unicodeLetter = suitVal === 'Heart' ? 'B' : suitVal === 'Spade' ? 'A' : suitVal === 'Diamond' ? 'C' : suitVal === 'Club' ? 'D' : null;
           const unicodeNumber = card === 10 ? 'A' : card;
           const cardUnicode = `1F0${unicodeLetter}${unicodeNumber}`;
+          const cardSvg = `https://raw.githubusercontent.com/Swordys/pokerApi/master/cardFold/${cardUnicode}.svg`;
           const cardOjb = {
             rank: rankCount,
             faceCard: false,
@@ -36,6 +37,7 @@ module.exports = (app) => {
             cardColor: `${suitObj.color}`,
             cardSuit: `${suitVal}`,
             cardUnicode,
+            cardSvg
           }
           this.deck.push(cardOjb);
 
@@ -44,6 +46,8 @@ module.exports = (app) => {
           const unicodeLetter = suitVal === 'Heart' ? 'B' : suitVal === 'Spade' ? 'A' : suitVal === 'Diamond' ? 'C' : suitVal === 'Club' ? 'D' : null;
           const unicodeNumber = card === 'Ace' ? 1 : card === 'King' ? 'E' : card === 'Queen' ? 'D' : card === 'Jack' ? 'C' : null;
           const cardUnicode = `1F0${unicodeLetter}${unicodeNumber}`;
+          const cardSvg = `https://raw.githubusercontent.com/Swordys/pokerApi/master/cardFold/${cardUnicode}.svg`;
+
           const cardOjb = {
             rank: rankCount,
             faceCard: card === 'King' || card === 'Queen' || card === 'Jack' ? true : false,
@@ -53,6 +57,7 @@ module.exports = (app) => {
             cardColor: `${suitObj.color}`,
             cardSuit: `${suitVal}`,
             cardUnicode,
+            cardSvg,
           }
           this.deck.push(cardOjb);
         }
