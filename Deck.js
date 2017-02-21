@@ -1,4 +1,5 @@
 var express = require('express');
+var chalk = require('chalk');
 
 module.exports = (app) => {
   function constructor() {
@@ -289,6 +290,7 @@ module.exports = (app) => {
 
 
   // ----------- Clalculations ------------
+
   const calcPair = (cardPair) => {
 
     let isPair = false;
@@ -341,11 +343,17 @@ module.exports = (app) => {
 
   const calcTable = (cardPair, table) => {
     // ROYAL FLASH
-    // checkRoyalFlash(cardPair, table);
-    // checkStraightFlush(cardPair, table);
+    console.log(checkRoyalFlash(cardPair, table));
+    console.log(checkStraightFlush(cardPair, table));
     console.log(checkFour(cardPair, table));
-    // checkFullHouse(cardPair, table);
-    // console.log(checkThree(cardPair, table));
+    console.log(checkFullHouse(cardPair, table));
+    console.log(checkFlush(cardPair, table));
+    console.log(checkStraight(cardPair, table));
+    console.log(checkThree(cardPair, table));
+    console.log(checkTwo(cardPair, table));
+    console.log(checkPair(cardPair, table));
+    console.log(checkHighCard(cardPair));
+    console.log('\n-------------------')
   }
 
   const checkRoyalFlash = (cardPair, table) => {
@@ -356,7 +364,6 @@ module.exports = (app) => {
       if (checkFlush(cardPair, table)) {
         const straightObj = checkStraight(cardPair, table);
         if (straightObj.straight && straightObj.rank === 14) {
-          console.log('ROYAL!');
           return true;
         }
       }
@@ -370,7 +377,6 @@ module.exports = (app) => {
     if (checkFlush(cardPair, table)) {
       const straightObj = checkStraight(cardPair, table);
       if (straightObj.straight) {
-        console.log('STRAIGHT FLUSH!');
         return true;
       }
     }
@@ -411,7 +417,6 @@ module.exports = (app) => {
         if (tableCard.rank === card.rank) {
           quadCount++;
           if (quadCount === 3) {
-            console.log('FOUR OF A KIND!');
             retCard = card;
           }
         }
@@ -459,7 +464,6 @@ module.exports = (app) => {
         }, this);
       }
       if (double) {
-        console.log('FULL HOUSE!');
         return {
           fullHouse: true,
           rank: cardOne.rank,
@@ -483,7 +487,6 @@ module.exports = (app) => {
     }, this);
 
     if (count + count2 === 5) {
-      console.log('FULL HOUSE!');
       let rank = 0;
       if (count < 3) {
         rank = cardOne.rank;
@@ -529,10 +532,10 @@ module.exports = (app) => {
     const suitArr = [heartSuit, clubtSuit, diamondSuit, spadeSuit];
     suitArr.forEach(suit => {
       if (suit === 5) {
-        console.log('FLUSH!')
         return true;
       }
     }, this);
+    return false;
   }
 
   const checkStraight = (cardPair, table) => {
@@ -544,11 +547,6 @@ module.exports = (app) => {
     const sortHand = uniqueArr.sort((a, b) => {
       return a < b;
     });
-
-    // console.log('\n\n-------------')
-    // sortHand.forEach(card => {
-    //   console.log(card);
-    // }, this);
 
     let count = 1;
     let countComp = 0;
@@ -569,7 +567,6 @@ module.exports = (app) => {
       if (sortHand[countComp] - 1 === sortHand[count]) {
         condition++;
         if (condition === 4) {
-          console.log('STRAIGHT!');
           return {
             straight: true,
             rank: sortHand[count - 4],
@@ -596,7 +593,7 @@ module.exports = (app) => {
       if (retCard) {
         return {
           threeOfKind: true,
-          rank: retCard.rank,
+          rank: retCard,
         }
       } else {
         return {
@@ -612,7 +609,6 @@ module.exports = (app) => {
         if (tableCard.rank === card.rank) {
           trippleCount++;
           if (trippleCount === 2) {
-            console.log('TREE OF A KIND!');
             retCard = card;
           }
         }
@@ -630,5 +626,110 @@ module.exports = (app) => {
         rank: 0
       }
     }
+  }
+
+  const checkTwo = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+    const handArr = [...cardPair, ...table];
+    const uniqueArr = [...new Set(table.map(card => card.rank))];
+    let retCard = null;
+    let retCardTwo = null;
+
+    if (cardOne.rank === cardTwo.rank) {
+      uniqueArr.forEach(card => {
+        let count = 0;
+        table.forEach(tableCard => {
+          if (card.rank === tableCard.rank) {
+            count++;
+            if (count === 2) {
+              retCard = card;
+            }
+          }
+        }, this);
+      }, this);
+
+      if (retCard) {
+        return {
+          twoPair: true,
+          rank: retCard,
+        }
+      } else {
+        return {
+          twoPair: false,
+          rank: 0,
+        }
+      }
+    } else {
+      let count = 0;
+      let count2 = 0;
+      table.forEach(tableCard => {
+        if (cardOne.rank === tableCard.rank) {
+          count++;
+          if (count === 1) {
+            retCard = cardOne.rank;
+          }
+        }
+        if (cardTwo.rank === tableCard.rank) {
+          count2++;
+          if (count2 === 1) {
+            retCardTwo = cardTwo.rank;
+          }
+        }
+      }, this);
+
+      if (retCard && retCardTwo) {
+        const rankVal = retCard > retCardTwo ? retCard : retCardTwo;
+        return {
+          twoPair: true,
+          rank: rankVal,
+        }
+      } else {
+        return {
+          twoPair: false,
+          rank: 0,
+        }
+      }
+    }
+  }
+
+  const checkPair = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+    let retCard = null;
+    if (cardOne.rank === cardTwo.rank) {
+      return {
+        pairCards: true,
+        rank: cardOne.rank
+      }
+    } else {
+      table.forEach(tableCard => {
+        if (cardOne.rank === tableCard.rank) {
+          retCard = cardOne.rank;
+        }
+        if (cardTwo.rank === tableCard.rank) {
+          retCard = cardTwo.rank;
+        }
+      }, this);
+      if (retCard) {
+        return {
+          pairCards: true,
+          rank: retCard,
+        }
+      } else {
+        return {
+          pairCards: false,
+          rank: 0,
+        }
+      }
+    }
+  }
+
+  const checkHighCard = (cardPair) => {
+    const test = cardPair.reduce((a, b) => a.rank + b.rank);
+    if (test > 22) {
+      return true;
+    }
+    return false;
   }
 }
