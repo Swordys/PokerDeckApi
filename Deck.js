@@ -181,6 +181,11 @@ module.exports = (app) => {
       if (numberArr.length === 2) {
         calcPair(numberArr);
       }
+      if (numberArr.length > 2 && numberArr.length < 8) {
+        const Pair = numberArr.slice(0, 2);
+        const Table = numberArr.slice(2, numberArr.length);
+        calcTable(Pair, Table);
+      }
       return numberArr;
     }
   }
@@ -283,13 +288,12 @@ module.exports = (app) => {
   }
 
 
-  // Clalculations -----
+  // ----------- Clalculations ------------
   const calcPair = (cardPair) => {
 
     let isPair = false;
     let isHighRank = false;
     let isSameSuit = false;
-    let isNextTo = false;
     let isAce = false;
     let isHighCard = false;
 
@@ -310,6 +314,8 @@ module.exports = (app) => {
         const roundRank = Math.floor((cardOne.rank + cardTwo.rank) / 2);
         confidenceIndex = roundRank * 1.3;
       }
+    } else {
+      confidenceIndex = Math.floor((cardOne.rank + cardTwo.rank) / 2);
     }
 
     if (cardOne.rank === 14 || cardTwo.rank === 14) {
@@ -329,12 +335,300 @@ module.exports = (app) => {
       confidenceIndex *= 1.1;
     }
 
-    if (cardOne.rank - cardTwo.rank === -1 || cardOne.rank - cardTwo.rank === 1) {
-      isNextTo = true;
-      confidenceIndex *= 1.1;
+    console.log(' Pair ' + isPair + '\n', 'Strong Rank ' + isHighRank + '\n', 'Ace ' + isAce + '\n', 'Same Suit ' + isSameSuit + '\n', 'High Card ' + isHighCard + '\n');
+    console.log('Confidence Index - ' + confidenceIndex + '\n\n');
+  }
+
+  const calcTable = (cardPair, table) => {
+    // ROYAL FLASH
+    // checkRoyalFlash(cardPair, table);
+    // checkStraightFlush(cardPair, table);
+    console.log(checkFour(cardPair, table));
+    // checkFullHouse(cardPair, table);
+    // console.log(checkThree(cardPair, table));
+  }
+
+  const checkRoyalFlash = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+
+    if (cardOne.rank > 9 || cardTwo.rank > 9) {
+      if (checkFlush(cardPair, table)) {
+        const straightObj = checkStraight(cardPair, table);
+        if (straightObj.straight && straightObj.rank === 14) {
+          console.log('ROYAL!');
+          return true;
+        }
+      }
     }
 
-    console.log(' Pair ' + isPair + '\n', 'Strong Rank ' + isHighRank + '\n', 'Ace ' + isAce + '\n', 'Same Suit ' + isSameSuit + '\n', 'Next To ' + isNextTo + '\n', 'High Card ' + isHighCard + '\n');
-    console.log('Confidence Index - ' + confidenceIndex + '\n\n');
+    return false;
+  }
+
+  const checkStraightFlush = (cardPair, table) => {
+
+    if (checkFlush(cardPair, table)) {
+      const straightObj = checkStraight(cardPair, table);
+      if (straightObj.straight) {
+        console.log('STRAIGHT FLUSH!');
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const checkFour = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+    let retCard = null;
+    let count = 0;
+    if (cardOne.rank === cardTwo.rank) {
+      table.forEach(tableCard => {
+        if (cardOne.rank === tableCard.rank) {
+          count++;
+          if (count === 2) {
+            retCard = cardOne.rank;
+          }
+        }
+      }, this);
+
+      if (retCard) {
+        return {
+          fourOfKind: true,
+          rank: retCard.rank,
+        }
+      } else {
+        return {
+          fourOfKind: false,
+          rank: 0
+        }
+      }
+    }
+
+    cardPair.forEach(card => {
+      let quadCount = 0;
+      table.forEach(tableCard => {
+        if (tableCard.rank === card.rank) {
+          quadCount++;
+          if (quadCount === 3) {
+            console.log('FOUR OF A KIND!');
+            retCard = card;
+          }
+        }
+      }, this);
+    }, this);
+
+    if (retCard) {
+      return {
+        fourOfKind: true,
+        rank: retCard.rank,
+      }
+    } else {
+      return {
+        fourOfKind: false,
+        rank: 0
+      }
+    }
+  }
+
+  const checkFullHouse = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+    let triple = false;
+    let double = false;
+    let uniqCounter = 0;
+    const handArr = [...cardPair, ...table];
+    const uniqueArr = [...new Set(table.map(card => card.rank))];
+
+    if (cardOne.rank === cardTwo.rank) {
+      table.forEach(card => {
+        if (cardOne.rank === card.rank) {
+          triple = true;
+        }
+      }, this);
+      if (triple) {
+        uniqueArr.forEach(uniqCard => {
+          table.forEach(card => {
+            if (uniqCard !== cardOne.rank && uniqCard === card.rank) {
+              uniqCounter++;
+              if (uniqCounter == 2) {
+                double = true;
+              }
+            }
+          }, this);
+        }, this);
+      }
+      if (double) {
+        console.log('FULL HOUSE!');
+        return {
+          fullHouse: true,
+          rank: cardOne.rank,
+        }
+      }
+      return {
+        fullHouse: false,
+        rank: 0
+      }
+    }
+
+    let count = 0;
+    let count2 = 0;
+    handArr.forEach(card => {
+      if (cardOne.rank === card.rank) {
+        count++;
+      }
+      if (cardTwo.rank === card.rank) {
+        count2++;
+      }
+    }, this);
+
+    if (count + count2 === 5) {
+      console.log('FULL HOUSE!');
+      let rank = 0;
+      if (count < 3) {
+        rank = cardOne.rank;
+      } else {
+        rank = cardTwo.rank;
+      }
+      return {
+        fullHouse: true,
+        rank
+      }
+    } else {
+      return {
+        fullHouse: false,
+        rank: 0,
+      }
+    }
+  }
+
+  const checkFlush = (cardPair, table) => {
+
+    let heartSuit = 0;
+    let clubtSuit = 0;
+    let diamondSuit = 0;
+    let spadeSuit = 0;
+
+    cardPair.forEach(card => {
+      card.cardSuit === 'Heart' ? heartSuit++ : heartSuit;
+      card.cardSuit === 'Club' ? clubtSuit++ : clubtSuit;
+      card.cardSuit === 'Diamond' ? diamondSuit++ : diamondSuit;
+      card.cardSuit === 'Spade' ? spadeSuit++ : spadeSuit;
+    }, this);
+
+    table.forEach(card => {
+      card.cardSuit === 'Heart' ? heartSuit++ : heartSuit;
+      card.cardSuit === 'Club' ? clubtSuit++ : clubtSuit;
+      card.cardSuit === 'Diamond' ? diamondSuit++ : diamondSuit;
+      card.cardSuit === 'Spade' ? spadeSuit++ : spadeSuit;
+    }, this);
+
+
+    // console.log(heartSuit, clubtSuit, diamondSuit, spadeSuit);
+
+    const suitArr = [heartSuit, clubtSuit, diamondSuit, spadeSuit];
+    suitArr.forEach(suit => {
+      if (suit === 5) {
+        console.log('FLUSH!')
+        return true;
+      }
+    }, this);
+  }
+
+  const checkStraight = (cardPair, table) => {
+
+    const handArr = [...cardPair, ...table];
+    const uniqueArr = [...new Set(handArr.map(card => card.rank))];
+
+    let length = uniqueArr.length;
+    const sortHand = uniqueArr.sort((a, b) => {
+      return a < b;
+    });
+
+    // console.log('\n\n-------------')
+    // sortHand.forEach(card => {
+    //   console.log(card);
+    // }, this);
+
+    let count = 1;
+    let countComp = 0;
+    let condition = 0;
+
+    while (length) {
+
+      if (count + 1 < length) {
+        count++;
+        countComp++;
+      } else {
+        return {
+          straight: false,
+          rank: 0,
+        }
+      }
+
+      if (sortHand[countComp] - 1 === sortHand[count]) {
+        condition++;
+        if (condition === 4) {
+          console.log('STRAIGHT!');
+          return {
+            straight: true,
+            rank: sortHand[count - 4],
+          }
+        }
+      } else {
+        condition = 0;
+      }
+
+    }
+  }
+
+  const checkThree = (cardPair, table) => {
+    const cardOne = cardPair[0];
+    const cardTwo = cardPair[1];
+    let retCard = null;
+    if (cardOne.rank === cardTwo.rank) {
+      table.forEach(tableCard => {
+        if (cardOne.rank === tableCard.rank) {
+          retCard = cardOne.rank;
+        }
+      }, this);
+
+      if (retCard) {
+        return {
+          threeOfKind: true,
+          rank: retCard.rank,
+        }
+      } else {
+        return {
+          threeOfKind: false,
+          rank: 0
+        }
+      }
+    }
+
+    cardPair.forEach(card => {
+      let trippleCount = 0;
+      table.forEach(tableCard => {
+        if (tableCard.rank === card.rank) {
+          trippleCount++;
+          if (trippleCount === 2) {
+            console.log('TREE OF A KIND!');
+            retCard = card;
+          }
+        }
+      }, this);
+    }, this);
+
+    if (retCard) {
+      return {
+        threeOfKind: true,
+        rank: retCard.rank,
+      }
+    } else {
+      return {
+        threeOfKind: false,
+        rank: 0
+      }
+    }
   }
 }
